@@ -1,0 +1,5 @@
+"Show all customers"
+"List all pending processes"
+"How many documents has [customer name] submitted?"
+"Which process has the most documents?"
+"Which customers are assigned to [process name]?"
