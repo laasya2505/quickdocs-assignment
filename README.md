@@ -1,4 +1,4 @@
-QuickDocs - Document Collection System with AI Query Interface
+# QuickDocs - Document Collection System with AI Query Interface
 A proof-of-concept document collection system for loan applications with AI-powered natural language querying capabilities.
 
 📋 Table of Contents
@@ -74,9 +74,9 @@ bash
 python3 -m venv venv
 
 # Activate virtual environment
-# On macOS/Linux:
+On macOS/Linux:
 source venv/bin/activate
-# On Windows:
+On Windows:
 venv\Scripts\activate
 
 # Install required packages
@@ -84,8 +84,8 @@ pip install flask
 3. Database Setup
 bash
 # Ensure you have the required SQL files:
-# - database/schema.sql (table creation scripts)
-# - database/sample_data.sql (sample data insertion)
+- database/schema.sql (table creation scripts)
+- database/sample_data.sql (sample data insertion)
 4. File Structure
 text
 quickdocs-assignment/
