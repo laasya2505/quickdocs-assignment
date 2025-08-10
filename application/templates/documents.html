@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Documents - QuickDocs{% endblock %}
+
+{% block content %}
+<h1>Document Submission</h1>
+
+<div class="document-form">
+    <h2>Submit Document</h2>
+    <form method="POST" action="{{ url_for('submit_document') }}">
+        <div class="form-group">
+            <label for="customer_id">Customer:</label>
+            <select id="customer_id" name="customer_id" required onchange="loadProcesses()">
+                <option value="">-- Select Customer --</option>
+                {% for customer in customers %}
+                <option value="{{ customer.id }}">{{ customer.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="process_id">Process:</label>
+            <select id="process_id" name="process_id" required>
+                <option value="">-- Select Process --</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="document_type_id">Document Type:</label>
+            <select id="document_type_id" name="document_type_id" required onchange="loadDocumentFields()">
+                <option value="">-- Select Document Type --</option>
+                {% for doc_type in document_types %}
+                <option value="{{ doc_type.id }}" data-fields="{{ doc_type.required_fields }}">{{ doc_type.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="file_url">File URL/Path:</label>
+            <input type="text" id="file_url" name="file_url" required 
+                   placeholder="e.g., /uploads/document.pdf">
+        </div>
+        
+        <div id="extracted-fields">
+            <h3>Extracted Data (Simulated OCR)</h3>
+            <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+                <em>These fields will be automatically populated by OCR in a real system</em>
+            </p>
+            <div id="dynamic-fields">
+                <!-- Dynamic fields will be inserted here based on document type -->
+                <div class="form-group">
+                    <label>Select a document type to see relevant fields</label>
+                    <input type="text" placeholder="Fields will appear here..." disabled style="background-color: #f5f5f5;">
+                </div>
+            </div>
+        </div>
+        
+        <button type="submit">Submit Document</button>
+    </form>
+</div>
+
+<script>
+function loadProcesses() {
+    const customerId = document.getElementById('customer_id').value;
+    const processSelect = document.getElementById('process_id');
+    
+    if (customerId) {
+        fetch(`/get_customer_processes/${customerId}`)
+            .then(response => response.json())
+            .then(data => {
+                processSelect.innerHTML = '<option value="">-- Select Process --</option>';
+                data.forEach(process => {
+                    processSelect.innerHTML += `<option value="${process.id}">${process.name}</option>`;
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    } else {
+        processSelect.innerHTML = '<option value="">-- Select Process --</option>';
+    }
+}
+
+function loadDocumentFields() {
+    const select = document.getElementById('document_type_id');
+    const fieldsContainer = document.getElementById('dynamic-fields');
+    
+    if (select.selectedIndex > 0) {
+        const selectedOption = select.options[select.selectedIndex];
+        const fieldsData = selectedOption.getAttribute('data-fields');
+        
+        fieldsContainer.innerHTML = '';
+        
+        if (fieldsData && fieldsData.trim() !== '') {
+            try {
+                const fields = JSON.parse(fieldsData);
+                
+                // Create a header for the fields
+                const headerDiv = document.createElement('div');
+                headerDiv.innerHTML = '<p style="font-weight: bold; color: #2c3e50; margin-bottom: 10px;">Document-specific fields:</p>';
+                fieldsContainer.appendChild(headerDiv);
+                
+                // Generate form fields based on the document type requirements
+                for (const [fieldName, fieldType] of Object.entries(fields)) {
+                    const fieldDiv = document.createElement('div');
+                    fieldDiv.className = 'form-group';
+                    
+                    const label = document.createElement('label');
+                    label.textContent = fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ':';
+                    
+                    const input = document.createElement('input');
+                    input.type = fieldType === 'number' ? 'number' : 'text';
+                    input.name = `extracted_${fieldName}`;
+                    input.id = `extracted_${fieldName}`;
+                    input.placeholder = `Enter ${fieldName.replace(/_/g, ' ')}`;
+                    
+                    // Add some styling
+                    input.style.width = '100%';
+                    input.style.padding = '8px';
+                    input.style.border = '1px solid #ddd';
+                    input.style.borderRadius = '4px';
+                    input.style.boxSizing = 'border-box';
+                    
+                    // Add sample data for demonstration
+                    if (fieldName === 'pan_number') {
+                        input.placeholder = 'e.g., ABCDE1234F';
+                    } else if (fieldName === 'gross_salary') {
+                        input.placeholder = 'e.g., 50000';
+                    } else if (fieldName === 'account_number') {
+                        input.placeholder = 'e.g., 1234567890';
+                    } else if (fieldName === 'aadhaar_number') {
+                        input.placeholder = 'e.g., 1234-5678-9012';
+                    }
+                    
+                    fieldDiv.appendChild(label);
+                    fieldDiv.appendChild(input);
+                    fieldsContainer.appendChild(fieldDiv);
+                }
+                
+                // Add a note about OCR simulation
+                const noteDiv = document.createElement('div');
+                noteDiv.innerHTML = '<p style="color: #27ae60; font-size: 12px; margin-top: 10px;"><strong>Note:</strong> In a real system, these fields would be automatically filled by OCR technology after uploading the document.</p>';
+                fieldsContainer.appendChild(noteDiv);
+                
+            } catch (e) {
+                console.error('Error parsing JSON fields:', e);
+                fieldsContainer.innerHTML = '<div class="form-group"><p style="color: #e74c3c;">Error loading document fields. Please contact support.</p></div>';
+            }
+        } else {
+            fieldsContainer.innerHTML = '<div class="form-group"><p style="color: #f39c12;">No specific fields defined for this document type.</p></div>';
+        }
+    } else {
+        // Reset to default state
+        fieldsContainer.innerHTML = `
+            <div class="form-group">
+                <label>Select a document type to see relevant fields</label>
+                <input type="text" placeholder="Fields will appear here..." disabled style="background-color: #f5f5f5;">
+            </div>
+        `;
+    }
+}
+
+// Load document fields when page loads if document type is already selected
+document.addEventListener('DOMContentLoaded', function() {
+    const documentTypeSelect = document.getElementById('document_type_id');
+    if (documentTypeSelect.value) {
+        loadDocumentFields();
+    }
+});
+</script>
+
+<style>
+/* Enhanced styling for the document form */
+.document-form {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#extracted-fields {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    margin-top: 20px;
+    border-left: 4px solid #3498db;
+}
+
+#extracted-fields h3 {
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+#dynamic-fields {
+    margin-top: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+button[type="submit"] {
+    background: #27ae60;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+button[type="submit"]:hover {
+    background: #219a52;
+}
+</style>
+{% endblock %}

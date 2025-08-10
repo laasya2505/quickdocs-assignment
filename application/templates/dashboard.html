@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - QuickDocs{% endblock %}
+
+{% block content %}
+<h1>Status Dashboard</h1>
+
+<div class="dashboard-stats">
+    <p>Process Assignments Overview</p>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Customer</th>
+            <th>Process</th>
+            <th>Status</th>
+            <th>Progress</th>
+            <th>Documents</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for assignment in assignments %}
+        <tr>
+            <td>{{ assignment.customer_name }}</td>
+            <td>{{ assignment.process_name }}</td>
+            <td>
+                {% if assignment.status == 'completed' %}
+                    <span class="status-completed">{{ assignment.status.title() }}</span>
+                {% elif assignment.completion_percentage > 0 %}
+                    <span class="status-pending">In Progress</span>
+                {% else %}
+                    <span class="status-not-started">Not Started</span>
+                {% endif %}
+            </td>
+            <td>{{ assignment.completion_percentage }}%</td>
+            <td>{{ assignment.documents_submitted }}/{{ assignment.documents_required }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5">No process assignments found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

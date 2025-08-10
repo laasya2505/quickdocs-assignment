@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error - QuickDocs{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-top: 50px;">
+    <h1>500 - Internal Server Error</h1>
+    <p>Something went wrong on our end.</p>
+    <a href="{{ url_for('dashboard') }}" style="display: inline-block; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 4px;">Go to Dashboard</a>
+</div>
+{% endblock %}
